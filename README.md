@@ -31,7 +31,6 @@ Every variable the deployment consumes. The first three are set automatically by
 
 | Variable | Default | What it does |
 |---|---|---|
-| `LISTMONK_app__root_url` | `https://${{RAILWAY_PUBLIC_DOMAIN}}` | Public URL; used for media links and email URLs |
 | `LISTMONK_db__host` | `${{postgres.RAILWAY_PRIVATE_DOMAIN}}` | Postgres host, auto-wired over the private network |
 | `LISTMONK_db__password` | `${{postgres.POSTGRES_PASSWORD}}` | Postgres password, auto-wired from the companion |
 | `POSTGRES_PASSWORD` | `${{secret(32)}}` | Auto-generated password for the Postgres companion |
@@ -46,7 +45,7 @@ Every variable the deployment consumes. The first three are set automatically by
 | `LISTMONK_ADMIN_API_USER` | unset | Optional API superuser (requires the two above, min 3 chars) |
 | `PORT` | injected by Railway | Port the service must listen on |
 
-SMTP is configured in the web UI under **Settings → SMTP** and stored in the database — it is not an env var. Any `LISTMONK_*_FILE` variable is also honored: its value is read from the file path it points to (upstream entrypoint behavior).
+SMTP is configured in the web UI under **Settings → SMTP** and stored in the database — it is not an env var. Two more DB settings are rewritten automatically at every boot by `entrypoint.sh` (listmonk loads DB settings over env vars, so these can't be env-driven): `upload.filesystem.upload_path` → `/data/uploads` (the `listmonk-data` volume, so campaign images survive restarts) and `app.root_url` → `https://${RAILWAY_PUBLIC_DOMAIN}` (correct media/email links).
 
 ### Deployment Dependencies
 

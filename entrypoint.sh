@@ -19,6 +19,26 @@ until ./listmonk --install --yes --idempotent; do
   sleep 5
 done
 
+# Fix two DB-seeded settings rows that listmonk's initSettings() loads OVER
+# env vars (see Dockerfile header). Idempotent: safe to re-run every boot.
+PSQL="psql -h ${LISTMONK_db__host} -p 5432 -U listmonk -d listmonk -v ON_ERROR_STOP=1 -q -t -A"
+export PGPASSWORD="${LISTMONK_db__password}"
+
+# 1. Media uploads: the seed default is the ephemeral "./uploads" dir — point
+#    it at the Railway volume mount instead so campaign images survive restarts.
+mkdir -p /data/uploads
+$PSQL -c "UPDATE settings SET value = '\"/data/uploads\"' WHERE key = 'upload.filesystem.upload_path' AND value <> '\"/data/uploads\"';"
+echo "[entrypoint] upload path pinned to /data/uploads."
+
+# 2. Root URL: the seed default is http://localhost:9000, which would break
+#    media links and email URLs. Rewrite it to the public Railway domain.
+if [ -n "${RAILWAY_PUBLIC_DOMAIN}" ]; then
+  $PSQL -c "UPDATE settings SET value = '\"https://${RAILWAY_PUBLIC_DOMAIN}\"' WHERE key = 'app.root_url';"
+  echo "[entrypoint] root URL set to https://${RAILWAY_PUBLIC_DOMAIN}."
+else
+  echo "[entrypoint] RAILWAY_PUBLIC_DOMAIN unset; keeping seeded root URL."
+fi
+
 # Chain into the upstream entrypoint (LISTMONK_*_FILE secret loading, PUID
 # handling) with the server binary as its command.
 echo "[entrypoint] starting listmonk server..."

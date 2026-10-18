@@ -13,16 +13,19 @@
 #   only two template variables are LISTMONK_db__host and
 #   LISTMONK_db__password, both single ${{...}} refs to the postgres companion
 #   (koanf maps LISTMONK_db__host -> db.host etc. via the LISTMONK_ prefix).
-# - No app volume: FALSE for uploads — campaign media/templates live in
-#   Postgres, but uploaded media FILES go to the filesystem provider under
-#   upload.filesystem.upload_path (default "uploads" in the DB settings).
-#   Point it at /data/uploads (a Railway volume mount) so campaign images
-#   survive restarts. LISTMONK_upload__filesystem__upload_path is a koanf
-#   key (upload.filesystem.upload_path) read at boot; the DB settings page
-#   may still display the default — the env value is what the store uses.
+# - Upload path ENV (LISTMONK_upload__filesystem__upload_path=/data/uploads) is a
+#   belt-and-braces fallback: listmonk's initSettings() loads the DB settings
+#   table OVER env vars, so entrypoint.sh rewrites the
+#   upload.filesystem.upload_path and app.root_url rows in the DB at boot —
+#   that UPDATE is what actually takes effect.
 # - No Docker HEALTHCHECK: the Alpine base has no curl/wget; Railway's
 #   external healthcheckPath (/health, a public unauthenticated endpoint)
 #   covers it.
+# - postgresql16-client is added so the entrypoint can fix two DB-seeded
+#   settings rows (initSettings() loads DB values OVER env vars): the upload
+#   path and the app root URL. Without this, campaign media would land in the
+#   ephemeral ./uploads dir and email/media links would point at
+#   http://localhost:9000.
 # - ENTRYPOINT is our script (not upstream docker-entrypoint.sh) because we
 #   must (a) bind the Railway-injected PORT — koanf does no shell expansion,
 #   so LISTMONK_app__address is composed here, and (b) run the idempotent
@@ -41,7 +44,8 @@ ENV LISTMONK_db__port=5432 \
     LISTMONK_upload__filesystem__upload_path=/data/uploads
 
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+RUN chmod +x /entrypoint.sh && \
+    apk --no-cache add postgresql16-client
 
 EXPOSE 9000
 
