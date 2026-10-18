@@ -13,8 +13,13 @@
 #   only two template variables are LISTMONK_db__host and
 #   LISTMONK_db__password, both single ${{...}} refs to the postgres companion
 #   (koanf maps LISTMONK_db__host -> db.host etc. via the LISTMONK_ prefix).
-# - No app volume: campaign media/templates live in Postgres tables and the
-#   SPA assets are compiled into the Go binary, so restarts lose nothing.
+# - No app volume: FALSE for uploads — campaign media/templates live in
+#   Postgres, but uploaded media FILES go to the filesystem provider under
+#   upload.filesystem.upload_path (default "uploads" in the DB settings).
+#   Point it at /data/uploads (a Railway volume mount) so campaign images
+#   survive restarts. LISTMONK_upload__filesystem__upload_path is a koanf
+#   key (upload.filesystem.upload_path) read at boot; the DB settings page
+#   may still display the default — the env value is what the store uses.
 # - No Docker HEALTHCHECK: the Alpine base has no curl/wget; Railway's
 #   external healthcheckPath (/health, a public unauthenticated endpoint)
 #   covers it.
@@ -32,7 +37,8 @@ USER root
 ENV LISTMONK_db__port=5432 \
     LISTMONK_db__user=listmonk \
     LISTMONK_db__database=listmonk \
-    LISTMONK_db__ssl_mode=disable
+    LISTMONK_db__ssl_mode=disable \
+    LISTMONK_upload__filesystem__upload_path=/data/uploads
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
