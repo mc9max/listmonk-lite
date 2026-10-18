@@ -2,7 +2,7 @@
 
 Self-hosted newsletter and mailing-list manager — a Mailchimp/Substack alternative you fully own. Create lists, design campaigns with the visual template editor, schedule and send to unlimited subscribers, and track opens, clicks, and bounces. One-click deploy on Railway with managed Postgres.
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.com/deploy/listmonk?utm_campaign=listmonk-lite)
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.com/deploy/listmonk-3?utm_campaign=listmonk-lite)
 
 ## Deploy and Host
 

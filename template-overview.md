@@ -1,4 +1,4 @@
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.com/deploy/listmonk?utm_campaign=listmonk-lite)
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.com/deploy/listmonk-3?utm_campaign=listmonk-lite)
 
 # Deploy and Host
 
